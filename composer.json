@@ -1,0 +1,22 @@
+{
+    "name": "evgen/invecting_calc",
+    "authors": [
+        {
+            "name": "Evgeniy Pirogov",
+            "email": "evgeniy.pirogov.78@mail.ru"
+        }
+    ],
+    "require": {},
+	
+	"autoload": {
+		"classmap": [
+			"app/controller",
+			"app/model",
+			"app/system/library",
+			"app/system/engine"
+		],
+		"files": [
+			
+		]
+	}
+}
