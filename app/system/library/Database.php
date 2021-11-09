@@ -54,7 +54,7 @@ class Database
 	* @param $sql
 	* @return array
 	*/
-	public function execute($sql = '', $params = '')
+	public function execute($sql = '', $params = [])
 	{
 		$sth = $this->link->prepare($sql);
 		$result = $sth->execute($params);

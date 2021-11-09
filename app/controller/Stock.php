@@ -20,6 +20,8 @@ class Stock extends Controller
 
     public function getDataCurl () 
     {
+        $this->load->model('', 'Stock');
+        
         $url = [
             'tqbr' => 'https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.json'
         ];
@@ -50,7 +52,8 @@ class Stock extends Controller
             $securities[] = $security;
         }
         
-        d($securities);
+        $this->model_stock->insertDataByCurl($securities);
+        //d($securities);
     }
 
 
