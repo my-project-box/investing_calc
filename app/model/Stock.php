@@ -70,4 +70,80 @@ class Stock extends Model
 
 
 
+    /**
+     * 
+     * 
+     */
+    public function insertDataByCurl2 (array $data = []) 
+    {
+        
+        $result = [];
+
+        /* --- Грузим в базу акции --- */
+
+        $columns_securities = '`'. str_replace (',', '`,`', strtolower (implode (',', $data['securities']['columns']))) .'`';
+        $marker_securities  = '';
+        $params_securities  = [];
+        $odku_securities    = '';
+
+        foreach ($data['securities']['data'] as $security) {
+            $marker_securities .= '('. implode (',', array_fill (0, count ($security), '?')) .'),';
+            $params_securities = array_merge ($params_securities, $security);
+        }
+
+        foreach ($data['securities']['columns'] as $column_securities) {
+            $odku_securities .= '`'. strtolower ($column_securities) .'` = VALUES(`'. strtolower ($column_securities) .'`),';
+        }
+
+
+        $sql = '
+            INSERT INTO moex_securities ('. $columns_securities .') 
+            VALUES '. rtrim($marker_securities, ',') .'
+            ON DUPLICATE KEY UPDATE '. rtrim($odku_securities, ',') .'
+        ';
+
+        $result_securities = $this->db->execute($sql, $params_securities);
+
+        if ($result_securities['result'] == 1)
+            $result['securities'] = 200;
+
+        
+        /* --- Грузим в базу данные по рынку --- */
+
+        $columns_securities_marketdata = '`'. str_replace (',', '`,`', strtolower (implode (',', $data['marketdata']['columns']))) .'`';
+        $marker_securities_marketdata  = '';
+        $params_securities_marketdata  = [];
+        $odku_securities_marketdata    = '';
+
+        foreach ($data['marketdata']['data'] as $marketdata) {
+            $marker_securities_marketdata .= '('. implode (',', array_fill (0, count ($marketdata), '?')) .'),';
+            $params_securities_marketdata = array_merge ($params_securities_marketdata, $marketdata);
+        }
+
+        foreach ($data['marketdata']['columns'] as $column_marketdata) {
+            $odku_securities_marketdata .= '`'. strtolower ($column_marketdata) .'` = VALUES(`'. strtolower ($column_marketdata) .'`),';
+        }
+
+
+        $sql = '
+            INSERT INTO moex_securities_marketdata ('. $columns_securities_marketdata .') 
+            VALUES '. rtrim($marker_securities_marketdata, ',') .'
+            ON DUPLICATE KEY UPDATE '. rtrim($odku_securities_marketdata, ',') .'
+        ';
+
+        $result_marketdata = $this->db->execute($sql, $params_securities_marketdata);
+
+        if ($result_marketdata['result'] == 1)
+            $result['securities_marketdata'] = 200;
+
+        //d($data['securities']['data']);
+        //d($data['securities']['columns']);
+        //d($columns_securities);
+        d($result);
+
+        //return $result;
+    }
+
+
+
 }

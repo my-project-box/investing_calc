@@ -65,7 +65,8 @@ class Database
 			'lastInsertId' => $this->link->lastInsertId(),
 			//'lastInsertId' => $this->link->query("SELECT LAST_INSERT_ID()")->fetchColumn(),
 			 // Возвращает количество строк, затронутых последним SQL-запросом
-			'countString' => $sth->rowCount()
+			'countString' => $sth->rowCount(),
+			'error' => $sth->errorInfo()
 		];
 		
 	} // End: function execute

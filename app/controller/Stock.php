@@ -29,7 +29,7 @@ class Stock extends Controller
         $curl = $this->curl->query($url['tqbr']);
         $result = json_decode($curl['result'], true);
 
-        $securities = [];
+        /*$securities = [];
 
         foreach ($result['securities']['data'] as $security_value) {
             $security = array_change_key_case(array_combine($result['securities']['columns'] , $security_value));
@@ -49,11 +49,11 @@ class Stock extends Controller
             if (in_array('TYPENAME', $result2['description']['data'][12]))
                 $security['type'] = $result2['description']['data'][12][2];*/
 
-            $securities[] = $security;
-        }
+            /*$securities[] = $security;
+        }*/
         
-        $this->model_stock->insertDataByCurl($securities);
-        //d($securities);
+        $this->model_stock->insertDataByCurl2 ($result);
+        //d($result);
     }
 
 
