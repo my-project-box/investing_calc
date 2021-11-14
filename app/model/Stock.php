@@ -14,56 +14,27 @@ class Stock extends Model
      */
     public function all () 
     {   
-        $sql = 'SELECT * FROM stock';
-        return $this->db->query($sql, $params = null);
+        $sql = '
+            SELECT s.*, msb.secname, msb.lotsize, msb.issuesize, msm.last FROM moex_securities AS s
+            LEFT JOIN moex_securities_marketdata AS msm ON msm.secid = s.secid
+            LEFT JOIN moex_securities_boards AS msb ON msb.secid = s.secid
+            WHERE msm.boardid = :boardid
+        ';
+        return $this->db->query($sql, ['boardid' => 'tqbr']);
     }
 
 
 
-    /**
-     * 
-     * 
-     */
-    public function insertDataByCurl (array $data = []) 
-    {
-        $values_stock        = '';
-        $on_duplcate_key     = '';
-        $params_stock              = [];
+    public function secid () 
+    {   
+        $sql = 'SELECT DISTINCT secid FROM moex_securities_boards';
 
-        $values_stock_boards = '';
-        $params_stock_boards = [];
+        $result = [];
 
-        foreach ($data as $i => $val) {
-            
-            $values_stock .= '(:secid_'. $i .', :name_'. $i .', :full_name_'. $i .', :isin_'. $i .', :issued_size_'. $i .', :lot_size_'. $i .', :last_price_'. $i .'),';
-            
-            $params_stock['secid_' . $i]       = $val['secid'];
-            $params_stock['name_' . $i]        = $val['shortname'];
-            $params_stock['full_name_' . $i]   = $val['secname'];
-            $params_stock['isin_' . $i]        = $val['isin'];
-            $params_stock['issued_size_' . $i] = $val['issuesize'];
-            $params_stock['lot_size_' . $i]    = $val['lotsize'];
-            $params_stock['last_price_' . $i]  = $val['last_price'];
-
-            
-            $values_stock_boards .= '(:secid_'. $i .', :boardid_'. $i .'),';
-
-            $params_stock_boards['secid_' . $i]   = $val['secid'];
-            $params_stock_boards['boardid_' . $i] = $val['boardid'];
-
-            //break;
+        foreach ($this->db->query($sql, $params = null) as $val) {
+            $result[] = $val['secid'];
+            //d($val['secid']);
         }
-        
-        $sql = '
-            INSERT INTO stock (secid, name, full_name, isin, issued_size, lot_size, last_price) 
-            VALUES '. rtrim($values_stock, ',') .'
-            ON DUPLICATE KEY UPDATE last_price = VALUES(last_price)
-        ';
-
-        $result = $this->db->execute($sql, $params_stock);
-
-        $sql = 'INSERT INTO stock_boards (secid, boardid) VALUES '. rtrim($values_stock_boards, ',') .'';
-        $this->db->execute($sql, $params_stock_boards);
 
         return $result;
     }
@@ -74,74 +45,127 @@ class Stock extends Model
      * 
      * 
      */
-    public function insertDataByCurl2 (array $data = []) 
+    public function insertDataByCurl (array $data = []) 
     {
         
-        $result = [];
+        $result  = [];
+        $columns = '';
+        $marker  = '';
+        $params  = [];
+        $odku    = '';
 
         /* --- Грузим в базу акции --- */
 
-        $columns_securities = '`'. str_replace (',', '`,`', strtolower (implode (',', $data['securities']['columns']))) .'`';
-        $marker_securities  = '';
-        $params_securities  = [];
-        $odku_securities    = '';
+        $columns = '`'. str_replace (',', '`,`', strtolower (implode (',', $data['securities']['columns']))) .'`';
 
         foreach ($data['securities']['data'] as $security) {
-            $marker_securities .= '('. implode (',', array_fill (0, count ($security), '?')) .'),';
-            $params_securities = array_merge ($params_securities, $security);
+            $marker .= '('. implode (',', array_fill (0, count ($security), '?')) .'),';
+            $params = array_merge($params, $security);
         }
 
-        foreach ($data['securities']['columns'] as $column_securities) {
-            $odku_securities .= '`'. strtolower ($column_securities) .'` = VALUES(`'. strtolower ($column_securities) .'`),';
-        }
-
+        foreach ($data['securities']['columns'] as $columns_securities)
+            $odku .= '`'. strtolower ($columns_securities) .'` = VALUES(`'. strtolower ($columns_securities) .'`),';
 
         $sql = '
-            INSERT INTO moex_securities ('. $columns_securities .') 
-            VALUES '. rtrim($marker_securities, ',') .'
-            ON DUPLICATE KEY UPDATE '. rtrim($odku_securities, ',') .'
+            INSERT INTO moex_securities_boards ('. $columns .') 
+            VALUES '. rtrim($marker, ',') .'
+            ON DUPLICATE KEY UPDATE '. rtrim($odku, ',') .'
         ';
 
-        $result_securities = $this->db->execute($sql, $params_securities);
+        $result_securities = $this->db->execute($sql, $params);
 
         if ($result_securities['result'] == 1)
             $result['securities'] = 200;
 
+        $marker  = '';
+        $params  = [];
+        $odku    = '';
+
         
         /* --- Грузим в базу данные по рынку --- */
 
-        $columns_securities_marketdata = '`'. str_replace (',', '`,`', strtolower (implode (',', $data['marketdata']['columns']))) .'`';
-        $marker_securities_marketdata  = '';
-        $params_securities_marketdata  = [];
-        $odku_securities_marketdata    = '';
+        $columns = '`'. str_replace (',', '`,`', strtolower (implode (',', $data['marketdata']['columns']))) .'`';
 
         foreach ($data['marketdata']['data'] as $marketdata) {
-            $marker_securities_marketdata .= '('. implode (',', array_fill (0, count ($marketdata), '?')) .'),';
-            $params_securities_marketdata = array_merge ($params_securities_marketdata, $marketdata);
+            $marker .= '('. implode (',', array_fill (0, count ($marketdata), '?')) .'),';
+            $params = array_merge($params, $marketdata);
         }
 
-        foreach ($data['marketdata']['columns'] as $column_marketdata) {
-            $odku_securities_marketdata .= '`'. strtolower ($column_marketdata) .'` = VALUES(`'. strtolower ($column_marketdata) .'`),';
-        }
-
+        foreach ($data['marketdata']['columns'] as $column_marketdata)
+            $odku .= '`'. strtolower ($column_marketdata) .'` = VALUES(`'. strtolower ($column_marketdata) .'`),';
 
         $sql = '
-            INSERT INTO moex_securities_marketdata ('. $columns_securities_marketdata .') 
-            VALUES '. rtrim($marker_securities_marketdata, ',') .'
-            ON DUPLICATE KEY UPDATE '. rtrim($odku_securities_marketdata, ',') .'
+            INSERT INTO moex_securities_marketdata ('. $columns .') 
+            VALUES '. rtrim($marker, ',') .'
+            ON DUPLICATE KEY UPDATE '. rtrim($odku, ',') .'
         ';
 
-        $result_marketdata = $this->db->execute($sql, $params_securities_marketdata);
+        $result_marketdata = $this->db->execute($sql, $params);
 
         if ($result_marketdata['result'] == 1)
             $result['securities_marketdata'] = 200;
 
-        //d($data['securities']['data']);
-        //d($data['securities']['columns']);
-        //d($columns_securities);
-        d($result);
+        $marker  = '';
+        $params  = [];
+        $odku    = '';
 
-        //return $result;
+
+        /* --- Грузим в базу данные по имитенту --- */
+
+        foreach ($data['security'] as $key => $security) {
+
+            $marker .= '('. implode (',', array_fill (0, 2, '?')) .'),';
+
+            if (!empty($security['description']['data']))
+                $data_security = json_encode ($security['description']['data'], JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE);
+            
+            $params = array_merge($params, [$key, $data_security]);
+            
+        }
+
+        $sql = '
+            INSERT INTO moex_securities (`secid`, `data`) 
+            VALUES '. rtrim($marker, ',') .'
+            ON DUPLICATE KEY UPDATE `data` = VALUES(`data`)
+        ';
+
+        $result_security = $this->db->execute($sql, $params);
+
+        if ($result_security['result'] == 1)
+            $result['security'] = 200;
+
+        $marker  = '';
+        $params  = [];
+        $odku    = '';
+
+
+        /* --- Грузим в базу данные по дивидентам имитента --- */
+
+        $one_elem = array_shift($data['security']);
+        $columns = '`'. str_replace (',', '`,`', strtolower (implode (',', $one_elem['dividends']['columns']))) .'`';
+
+        foreach ($data['security'] as $key => $security) {
+
+            if (empty($security['dividends']['data'])) continue;   
+
+            foreach ($security['dividends']['data'] as $dividends) {
+                $marker .= '('. implode (',', array_fill (0, count($security['dividends']['columns']), '?')) .'),';
+                $params = array_merge($params, $dividends);
+            }
+                    
+        }
+
+        $sql = '
+            INSERT INTO moex_securities_dividends ('. $columns .') 
+            VALUES '. rtrim($marker, ',') .'
+        ';
+
+        $result_dividends = $this->db->execute($sql, $params);
+
+        if ($result_dividends['result'] == 1)
+            $result['dividends'] = 200;
+
+        return $result;
     }
 
 

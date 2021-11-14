@@ -32,30 +32,218 @@ class Curl
 
 
     /**
-     * Получаем контент сайта-донора
+     * Получаем данные по одному УРЛ
      * 
      * 
      */
-    public function query($url, $post = '') 
+    public function one ($url, $post = false, $followLocation = false, $maxRedirects = 10) 
     {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
+        // Options
+        $curlOptions = [
             CURLOPT_URL            => $url,
             CURLOPT_HEADER         => false,
             CURLOPT_REFERER        => $this->referer,
             CURLOPT_USERAGENT      => $this->getUserAgent(),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            //CURLOPT_POST           => isset($post) ? true : false,
-            //CURLOPT_POSTFIELDS     => isset($post) ? $post : '',
-            CURLOPT_TIMEOUT        => 60
-        ]);
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ];
+
+        if ($post) {
+            $curlOptions[CURLOPT_RETURNTRANSFER] = true;
+        }
+
+        if ($followLocation) {
+            $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+            $curlOptions[CURLOPT_MAXREDIRS]      = $maxRedirects;
+        }
+        
+        $curl = curl_init();
+
+        curl_setopt_array($curl, $curlOptions);
 
         $result = curl_exec($curl);
         $info   = curl_getinfo($curl);
 
         curl_close($curl);
+
+        return ['result' => $result, 'info' => $info];
+    }
+
+
+
+    /**
+     * Мульти соединение
+     * 
+     * 
+     */
+    public function multi ($urls, $post = false, $followLocation = false, $maxRedirects = 10) 
+    {
+        // Options
+        $curlOptions = [
+            CURLOPT_HEADER         => false,
+            CURLOPT_NOBODY         => false,
+            CURLOPT_REFERER        => $this->referer,
+            CURLOPT_USERAGENT      => $this->getUserAgent (),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_CONNECTTIMEOUT => 10
+        ];
+
+        if ($post) {
+            $curlOptions[CURLOPT_RETURNTRANSFER] = true;
+        }
+
+        if ($followLocation) {
+            $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+            $curlOptions[CURLOPT_MAXREDIRS]      = $maxRedirects;
+        }
+
+        // Init multi-curl
+        $mh = curl_multi_init ();
+        $chArray = [];
+
+        $urls = !is_array ($urls) ? [$urls] : $urls;
+        foreach ($urls as $key => $url) {
+            // Init of requests without executing
+            $ch = curl_init ($url);
+            curl_setopt_array ($ch, $curlOptions);
+
+            $chArray[$key] = $ch;
+
+            // Add the handle to multi-curl
+            curl_multi_add_handle ($mh, $ch);
+        }
+
+        // Execute all requests simultaneously
+        $active = null;
+        do {
+            $mrc = curl_multi_exec ($mh, $active);
+        } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+
+        while ($active && $mrc == CURLM_OK) {
+            // Wait for activity on any curl-connection
+            if (curl_multi_select ($mh) === -1) {
+                usleep (100);
+            }
+
+            while (curl_multi_exec ($mh, $active) == CURLM_CALL_MULTI_PERFORM);
+        }
+
+        // Close the resources
+        foreach ($chArray as $ch) {
+            curl_multi_remove_handle ($mh, $ch);
+        }
+        curl_multi_close ($mh);
+
+        // Access the results
+        $result = [];
+        $info   = []; 
+
+        foreach ($chArray as $key => $ch) {
+            // Get response
+            $result[$key] = curl_multi_getcontent ($ch);
+            $info[$key]   = curl_getinfo ($ch);
+        }
+
+        return ['result' => $result, 'info' => $info];
+    }
+
+
+
+    /**
+     * Многопоточный cURL
+     * 
+     * 
+     */
+    public function multiThreads ($urls, $post = false, $threads = 10, $followLocation = false, $maxRedirects = 10)
+    {
+        // Options
+        $curlOptions = [
+            CURLOPT_HEADER         => false,
+            CURLOPT_NOBODY         => false,
+            CURLOPT_REFERER        => $this->referer,
+            CURLOPT_USERAGENT      => $this->getUserAgent (),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_CONNECTTIMEOUT => 10
+        ];
+
+        if ($post) {
+            $curlOptions[CURLOPT_RETURNTRANSFER] = true;
+        }
+
+        if ($followLocation) {
+            $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+            $curlOptions[CURLOPT_MAXREDIRS] = $maxRedirects;
+        }
+
+        // Init multi-curl
+        $mh = curl_multi_init ();
+        $chArray = [];
+
+        $executeMethod = function ($mh, $chArray, &$result, &$running, &$currentThread) {
+            usleep (100);
+
+            while (curl_multi_exec ($mh, $running) === CURLM_CALL_MULTI_PERFORM);
+
+            curl_multi_select ($mh);
+
+            while ($done = curl_multi_info_read ($mh)) {
+
+                foreach ($chArray as $key => $ch) {
+
+                    if ($ch == $done['handle']) {
+
+                        // Get response
+                        $result[$key] = curl_multi_getcontent ($ch);
+                        $info[$key]   = curl_getinfo ($ch);
+
+                    }
+
+                }
+
+                curl_multi_remove_handle ($mh, $done['handle']);
+                curl_close ($done['handle']);
+
+                $currentThread--;
+            }
+        };
+
+        $result        = [];
+        $info          = [];
+        $running       = [];
+        $currentThread = 0;
+
+        $urls = !is_array ($urls) ? [$urls] : $urls;
+
+        foreach ($urls as $key => $url) {
+
+            // Init of requests without executing
+            $ch = curl_init ($url);
+            curl_setopt_array ($ch, $curlOptions);
+
+            $chArray[$key] = $ch;
+
+            // Add the handle to multi-curl
+            curl_multi_add_handle ($mh, $ch);
+
+            $currentThread++;
+
+            if ($currentThread >= $threads) {
+
+                while ($currentThread >= $threads)
+                    $executeMethod ($mh, $chArray, $result, $running, $currentThread);
+
+            }
+        }
+
+        do {
+
+            $executeMethod($mh, $chArray, $result, $running, $currentThread);
+
+        } while($running > 0);
+        
+        curl_multi_close ($mh);
 
         return ['result' => $result, 'info' => $info];
     }

@@ -1,0 +1,110 @@
+/* --- Обнуление CSS стилей --- */
+* {margin: 0; padding: 0; border: 0;}
+
+*, *:before, *:after {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+html, body {
+	width: 100%;
+	height: 100%;
+	font-size: 100%;
+	line-height: 1;
+	font-size: 16px;
+	-ms-text-size-adjust: 100%;
+	-moz-text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
+}
+
+:focus, :active, a:focus, a:active {
+	outline: none;
+}
+
+nav, header, footer, main, aside {
+	display: block;
+}
+
+input, button, textarea {
+	font-family: inherit;
+}
+
+input:: -ms-clear {display: none;}
+button {cursor: pointer;}
+button:: -moz-focus-inner {padding: 0, border: 0;}
+a, a:hover, a:visited {text-decoration: none;}
+ul { margin: 0 !important; padding: 0 !important;}
+ul li {list-style: none;}
+img {vertical-align: top;}
+
+h1, h2, h3, h4, h5, h6 {font-size: inherif; font-weight: 400;}
+
+
+/********/
+body {
+    background-color: black;
+}
+
+.security__list {
+    display: flex;
+     flex-direction: column;
+     align-items: center;
+}
+
+.security__head,
+.security__body {
+    display: flex;
+    justify-content: start;
+    background-color: white;
+}
+
+.security__head div,
+.security__body div {
+    padding: 10px 20px;
+    width: 200px;
+    max-width: 200px;
+}
+
+.security__head div:nth-child(1),
+.security__body div:nth-child(1) {
+    background-color: burlywood;
+}
+
+
+.security__head div:nth-child(2),
+.security__body div:nth-child(2),
+.security__head div:nth-child(4),
+.security__body div:nth-child(4) {
+    width: 100px;
+}
+
+.security__head {
+    position: sticky;
+    top:0;
+}
+
+.security__head div {
+    font-weight: 600;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.security__body {
+    font-size: .8em;
+    align-items: center;
+}
+
+.security__body div:nth-child(2) {
+    text-transform: uppercase;
+}
+
+.security__body {
+    border-bottom: 1px solid #ccc;
+}
+
+.security__body:last-child {
+    border-bottom: none;
+}
