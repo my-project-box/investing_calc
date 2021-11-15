@@ -28,10 +28,11 @@
                                     <div><span>Тип акции</span></div>
                                     <div><span>Кол-во в лоте</span></div>
                                     <div><span>Выпущено</span></div>
+                                    <div><span>Валюта</span></div>
                                     <div><span>Цена рыночная</span></div>
                                     <div><span>Капитализация</span></div>
                                     <div><span>Цена реальная</span></div>
-                                    <div><span>Дивидендная доходность, ср</span></div>
+                                    <div><span>Дивидендная доходность, % / ед</span></div>
                                 </div>
                                 <?php foreach ($securities as $security) : ?>
                                 <div class="security__body">
@@ -40,10 +41,13 @@
                                     <div><?= $security['type'] ?></div>
                                     <div><?= $security['lotsize'] ?></div>
                                     <div><?= $security['issuesize'] ?></div>
+                                    <div><?= $security['faceunit'] ?></div>
                                     <div><?= $security['last'] ?></div>
                                     <div><input type="text" name="text" value=""></div>
                                     <div></div>
-                                    <div></div>
+                                    <div><?= $security['dividend_yield_percent'] ?>% 
+                                    <?php if (!empty ($security['dividends'])) : ?> / <?= $security['dividends']['average_value_total'] ?><?php endif ?>
+                                    </div>
                                 </div>
                                 <?php endforeach ?>
                             </div>

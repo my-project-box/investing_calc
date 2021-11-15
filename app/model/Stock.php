@@ -12,28 +12,90 @@ class Stock extends Model
      * 
      * 
      */
-    public function all () 
+    public function getSecurities () 
     {   
         $sql = '
-            SELECT s.*, msb.secname, msb.lotsize, msb.issuesize, msm.last FROM moex_securities AS s
+            SELECT s.*, msb.secname, msb.lotsize, msb.issuesize, msb.faceunit, msm.last FROM moex_securities AS s
             LEFT JOIN moex_securities_marketdata AS msm ON msm.secid = s.secid
             LEFT JOIN moex_securities_boards AS msb ON msb.secid = s.secid
             WHERE msm.boardid = :boardid
         ';
+
         return $this->db->query($sql, ['boardid' => 'tqbr']);
     }
 
 
 
-    public function secid () 
+    /**
+     * Получаем тикет имитента
+     * 
+     */
+    public function secidAll () 
     {   
         $sql = 'SELECT DISTINCT secid FROM moex_securities_boards';
 
         $result = [];
 
-        foreach ($this->db->query($sql, $params = null) as $val) {
+        foreach ($this->db->query($sql, $params = null) as $val)
             $result[] = $val['secid'];
-            //d($val['secid']);
+
+        return $result;
+    }
+
+
+
+    /**
+     * Получаем дивиденды имитента
+     * 
+     */
+    public function getDividends (array $data) 
+    {
+        $result = [];
+        
+        $sql = 'SELECT * FROM moex_securities_dividends';
+        $params = [];
+
+        if ($data['secid']) {
+            $sql .= ' WHERE secid = :secid';
+            $params['secid'] = $secid;
+        }
+        
+        foreach ($this->db->query($sql, $params) as $dividends) {
+
+            $date_registry_close = new \Datetime ($dividends['registryclosedate']);
+            $year_registry_close = $date_registry_close->format ('Y');
+            if ($year_registry_close == date ('Y') && $data['current_year'] == false) continue;
+
+           $result[$dividends['secid']][$year_registry_close][] = $dividends;
+            krsort($result[$dividends['secid']]);
+        }
+
+        
+        foreach ($result as $key => $dividends) {
+            foreach ($dividends as $years_key => $years) {
+                $sum   = 0;
+
+                foreach ($years as $year)
+                    $sum += $year['value'];
+
+                //$result[$key][$years_key] = [];
+                $result[$key][$years_key]['sum_value'] = $sum;
+                //$result[$key][$years_key]['history'] = $years;
+            }
+            
+        }
+
+
+        foreach ($result as $key_imitent => $years) {
+            $sum = 0;
+            $count_years = count($years);
+
+            foreach ($years as $year) 
+                $sum += $year['sum_value'];
+            
+            $result[$key_imitent] = [];
+            $result[$key_imitent]['average_value_total'] = round ($sum / $count_years, 2);
+            $result[$key_imitent]['years']               = $years;
         }
 
         return $result;

@@ -8,21 +8,31 @@ use
 class Stock extends Controller
 {
     
-    public function index ()
+    
+    public function index ($current_year = false)
     {
         $this->load->model('', 'Stock');
-        $securities = $this->model_stock->all ();
+
+        $dividends = $this->model_stock->getDividends (['secid' => false, 'current_year' => false]);
+        $securities = $this->model_stock->getSecurities ();
         
         foreach ($securities as $key => $security) {
 
-            $data = json_decode($security['data'], true);
+            $data = json_decode ($security['data'], true);
             $data_key = [];
             foreach ($data as $val) 
                 $data_key[] = $val[0];
             
-            $new_data = array_combine($data_key, $data);
+            $new_data = array_combine ($data_key, $data);
             $securities[$key]['type'] = $new_data['TYPENAME'][2];
+
+            $secid = strtoupper ($security['secid']);
+            $securities[$key]['dividend_yield_percent'] = isset ($dividends[$secid]) && isset ($dividends[$secid]['average_value_total']) && $security['last'] != 0 ? round(($dividends[$secid]['average_value_total'] / $security['last']) * 100, 2) : 0;
+            $securities[$key]['dividends'] = isset ($dividends[$secid]) ? $dividends[$secid] : '';
         }
+
+        
+        //d($securities);
         //extract();
         //d($securities);
         require_once 'app/view/page/stock.php';
@@ -47,7 +57,7 @@ class Stock extends Controller
         
         /* --- Получаем данны по конкретному имитенту в $result['security'] --- */
 
-        $securities_secid = $this->model_stock->secid ();
+        $securities_secid = $this->model_stock->secidAll ();
         $urls_security = [];
 
         foreach ($securities_secid as $secid) {
