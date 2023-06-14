@@ -40,7 +40,7 @@ class Router
 			if (preg_match("~$uriPattern~", $uri)) {
 
 				$error = false;
-
+				
 				// Получаем внутрений путь из внешнего согласно правилу
 				$externalPath = preg_replace("~$uriPattern~", $path, $uri);
 				

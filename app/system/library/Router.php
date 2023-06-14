@@ -34,7 +34,8 @@ class Router
 	{
 		if(!empty($_SERVER['REQUEST_URI']))
 		{
-			return trim($_SERVER['REQUEST_URI'], '/');
+			$uri = parse_url($_SERVER['REQUEST_URI']);
+			return trim($uri['path'], '/');
 		}
 	} // End: function getUri
 	

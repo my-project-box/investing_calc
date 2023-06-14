@@ -181,7 +181,7 @@ class Curl
         $mh = curl_multi_init ();
         $chArray = [];
 
-        $executeMethod = function ($mh, $chArray, &$result, &$running, &$currentThread) {
+        $executeMethod = function ($mh, $chArray, &$result, &$running, &$currentThread, &$info) {
             usleep (100);
 
             while (curl_multi_exec ($mh, $running) === CURLM_CALL_MULTI_PERFORM);
@@ -232,14 +232,14 @@ class Curl
             if ($currentThread >= $threads) {
 
                 while ($currentThread >= $threads)
-                    $executeMethod ($mh, $chArray, $result, $running, $currentThread);
+                    $executeMethod ($mh, $chArray, $result, $running, $currentThread, $info);
 
             }
         }
 
         do {
 
-            $executeMethod($mh, $chArray, $result, $running, $currentThread);
+            $executeMethod($mh, $chArray, $result, $running, $currentThread, $info);
 
         } while($running > 0);
         

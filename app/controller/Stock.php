@@ -8,75 +8,232 @@ use
 class Stock extends Controller
 {
     
-    
+    /**
+     * Главная страница
+     * 
+     */
     public function index ($current_year = false)
     {
+        // Подключаем модели
         $this->load->model('', 'Stock');
+        $this->load->model('', 'Portfolio');
 
-        $dividends = $this->model_stock->getDividends (['secid' => false, 'current_year' => false]);
-        $securities = $this->model_stock->getSecurities ();
+        $data = [];
+        $data_sort['user_id']   = isset($this->request->session()['user_id']) ? $this->request->session()['user_id'] : '';
+
+        $data_sort['portfolio_id'] = isset($_GET['portfolio']) ? $_GET['portfolio'] : '';
+        $data_sort['listlevel']    = isset($_GET['listlevel']) ? $_GET['listlevel'] : '';
+        $data_sort['idea']         = isset($_GET['idea']) ? $_GET['idea'] : '';
+        $data_sort['date_from']    = isset($_GET['date_from']) ? $_GET['date_from'] : '';
+        $data_sort['date_to']      = isset($_GET['date_to'])   ? $_GET['date_to'] : '';
+
+        $data['filter']  = $data_sort;
+
+        $this->model_stock->addAveragePercentDividend ();
+
+        $data_sort['currency'] = true;
+        $dividends = $this->model_stock->getDividends ($data_sort);
+        //d($dividends);
+        $data['securities'] = $this->model_stock->getSecurities ($data_sort);
         
-        foreach ($securities as $key => $security) {
-
-            $data = json_decode ($security['data'], true);
-            $data_key = [];
-            foreach ($data as $val) 
-                $data_key[] = $val[0];
+        foreach ($data['securities'] as $key => $security)
+        {
+            $json = json_decode ($security['data'], true);
             
-            $new_data = array_combine ($data_key, $data);
-            $securities[$key]['type'] = $new_data['TYPENAME'][2];
+            foreach ($json as $val)
+            {
+                if ($val['name'] =='TYPENAME') 
+                {
+                    $r = preg_replace ('~Акция ~iu', '', $val['value']);
+                    $data['securities'][$key]['type'] = ucfirst ($r);
+                }      
+            }
+            
+            $secid = $security['secid'];
 
-            $secid = strtoupper ($security['secid']);
-            $securities[$key]['dividend_yield_percent'] = isset ($dividends[$secid]) && isset ($dividends[$secid]['average_value_total']) && $security['last'] != 0 ? round(($dividends[$secid]['average_value_total'] / $security['last']) * 100, 2) : 0;
-            $securities[$key]['dividends'] = isset ($dividends[$secid]) ? $dividends[$secid] : '';
+            $data['securities'][$key]['dividends_yield_years']      = isset ($dividends[$secid]['yield_years'])   ? $dividends[$secid]['yield_years'] : 0;
+            $data['securities'][$key]['dividends_number_years_pay'] = isset ($dividends[$secid]['count_years'])   ? $dividends[$secid]['count_years'] : 0;
+            $data['securities'][$key]['dividends_years_checked']    = isset ($dividends[$secid]['years_checked']) ? $dividends[$secid]['years_checked'] : 0;
+            $data['securities'][$key]['dividends']                  = isset ($dividends[$secid])                  ? $dividends[$secid] : '';
         }
 
+        $data['portfolios'] = $this->model_portfolio->getPortfolios ($data_sort);
         
-        //d($securities);
-        //extract();
-        //d($securities);
-        require_once 'app/view/page/stock.php';
+        $data['title'] = 'Листинг акций российских комапний';
+
+        $script = '<script src="../app/view/js/stock.js"></script>';
+       // d($data);
+        extract($data);
+        
+        require_once 'app/view/page/shares.php';
         return true;
     }
 
 
-    public function getDataCurl () 
+
+    /**
+     * Страница конкретного актива
+     * 
+     */
+    public function page (string $tiker = '', string $action = '') 
     {
-        $result = [];
+        // Подключаем модели
         $this->load->model('', 'Stock');
-        
-        $urls_boards = [
-            'tqbr' => 'https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.json',
-        ];
+        $this->load->model('', 'User');
 
-        $curl_securities = $this->curl->multi ($urls_boards);
+        $data      = [];
+        $data_sort = [];
 
-        foreach ($curl_securities['result'] as $val)
-            $result = json_decode ($val, true);
+        $url = str_replace ('/delete', '', array_key_first ( $this->request->get() ) );
 
-        
-        /* --- Получаем данны по конкретному имитенту в $result['security'] --- */
+        $data_sort = array_merge ($this->request->get(), [ 'secid' => $tiker], $this->request->session());
 
-        $securities_secid = $this->model_stock->secidAll ();
-        $urls_security = [];
-
-        foreach ($securities_secid as $secid) {
-            $urls_security['description'][$secid] = 'https://iss.moex.com/iss/securities/' . $secid . '.json';
-            $urls_security['dividends'][$secid]  = 'https://iss.moex.com/iss/securities/' . $secid . '/dividends.json';
+        if ( isset ($this->request->get()['add']) && $this->request->get()['add'] ) 
+        {
+            $this->model_user->inserUserAssetBuy ( $data_sort );
+            header('Location: /'. $url );
         }
 
-        $curl_security_description = $this->curl->multiThreads ($urls_security['description']);
+        if ( $action == 'delete')
+        {
+            $this->model_user->deleteUserAssetBuy ( $data_sort );
+            header('Location: /'. $url);
+        }
 
-        foreach ($curl_security_description['result'] as $key => $val)
-            $result['security'][$key] = json_decode ($val, true);
+        $data = $this->model_stock->getSecurity ( [ 'secid' => $tiker, 'user_id' => $this->request->session()['user_id'] ] );
+        $data['assets'] = $this->model_user->getUserAssetBuy ( [ 'secid' => $tiker, 'user_id' => $this->request->session()['user_id'] ] );
+        $data['url'] = $url;
+
+        $data['title'] = 'Страница актива';
+
+        if ( !empty ( $data ) )
+            extract($data);
+
+        require_once 'app/view/page/share.php';
+        return true;
+    }
 
 
-        $curl_security_dividends = $this->curl->multiThreads ($urls_security['dividends']);
 
-        foreach ($curl_security_dividends['result'] as $key => $val)
-            $result['security'][$key] += json_decode ($val, true);
+    /**
+     * 
+     * 
+     */
+    public function ideaCheckAjax () 
+    {
+        $this->load->model('', 'Stock');
+
+        $error = [];
+
+        $json = json_decode (file_get_contents("php://input"), true);
+
+        $this->model_stock->addSecurityToIdea ($json);
+
+        echo json_encode( [
+            'error'  =>  $error, 
+            'result' => '200'
+        ], JSON_UNESCAPED_UNICODE );
+    }
+
+
+
+    /**
+     * Ajax
+     * 
+     */
+    public function updateDataAjax () 
+    {
+        $this->load->model('', 'Stock');
+
+        $error = [];
+
+        $json = json_decode (file_get_contents("php://input"), true);
+
+        $assets = TRUE;
+
+        if ( !empty ( $json['assets'] ) && !preg_match ( '~^[0-9\s]+$~iu', $json['assets'] ) ) 
+        {
+            $error['assets'] = 'Капитализация компании должна содержать только цифры';
+            $assets = FALSE;
+            echo json_encode( [
+                'error'  =>  $error, 
+                'result' => ''
+            ], JSON_UNESCAPED_UNICODE );
+
+            return;
+        }
+        
+        $data = [
+            'secid'        => $json['secid'],
+            'assets'       => !empty ($json['assets']) && $assets ? preg_replace ('~\s+~iu', '', $json['assets']) : '', // Убираем пробелы 121 964 061 000,
+            'actual_price' => $json['assets'] != 0 && $assets ? $json['assets'] / $json['issuesize'] : '',
+            'portfolio_id' => $json['portfolio'],
+            'user_id'      => $json['user_id']
+        ];
+        
+        $result = $this->model_stock->updateSecurity ( $data );
+
+        if ($result['result'] == true) 
+        {
+            if ( empty ($data['assets']) && empty ($data['portfolio_id']) ) 
+                $this->model_stock->deleteSecurity ( $data );
             
-        $this->model_stock->insertDataByCurl ($result);
+            echo json_encode( [
+                'error'  =>  $error, 
+                'result' => [
+                    'assets'       => $data['assets'],
+                    'actual_price' => !empty ( $data['actual_price'] ) ? number_format ( $data['actual_price'], 2, ',', ' ' ) : ''
+                ]
+            ], JSON_UNESCAPED_UNICODE );
+        }
+        
+    }
+
+
+
+    /**
+     * Полученные данные ложим в портфель
+     * 
+     */
+    public function addPortfolioAjax () 
+    {
+        $this->load->model('', 'Stock');
+
+        $json = json_decode ( file_get_contents("php://input"), true );
+        $result = $this->model_stock->updateSecurity ($json);
+
+        if ($result['result'] == true) 
+            echo json_encode(['status' => 200]);
+
+    }
+
+
+
+    /**
+     * 
+     * 
+     * 
+     */
+    public function getModalAjax () 
+    {
+        // Подключаем модели
+        $this->load->model('', 'Stock');
+        $this->load->model('', 'Portfolio');
+
+        $data = [];
+
+        $json = json_decode ( file_get_contents("php://input"), true );
+
+        $data_sort = array_merge ($this->request->session (), $json);
+
+        $data = $this->model_stock->getSecurity ( $data_sort );
+        $data['user_id'] = $this->request->session ()['user_id'];
+        $data['portfolios'] = $this->model_portfolio->getPortfolios ( $data_sort );
+
+        extract ( $data );
+
+        require_once 'app/view/tpl/modal.php';
+        return true;
     }
 
 

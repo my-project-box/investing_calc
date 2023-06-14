@@ -8,16 +8,25 @@ class ComposerStaticInit20b2b12e06f75c33c13df72d5e2fb3e6
 {
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'controller\\ExchangeApi' => __DIR__ . '/../..' . '/app/controller/ExchangeApi.php',
+        'controller\\Home' => __DIR__ . '/../..' . '/app/controller/Home.php',
+        'controller\\Portfolio' => __DIR__ . '/../..' . '/app/controller/Portfolio.php',
         'controller\\Stock' => __DIR__ . '/../..' . '/app/controller/Stock.php',
+        'controller\\User' => __DIR__ . '/../..' . '/app/controller/User.php',
         'engine\\Controller' => __DIR__ . '/../..' . '/app/system/engine/Controller.php',
         'engine\\Loader' => __DIR__ . '/../..' . '/app/system/engine/Loader.php',
         'engine\\Model' => __DIR__ . '/../..' . '/app/system/engine/Model.php',
         'engine\\Registry' => __DIR__ . '/../..' . '/app/system/engine/Registry.php',
+        'engine\\Request' => __DIR__ . '/../..' . '/app/system/engine/Request.php',
         'engine\\Router' => __DIR__ . '/../..' . '/app/system/engine/Router.php',
+        'library\\Cron' => __DIR__ . '/../..' . '/app/system/library/Cron.php',
         'library\\Curl' => __DIR__ . '/../..' . '/app/system/library/Curl.php',
         'library\\Database' => __DIR__ . '/../..' . '/app/system/library/Database.php',
         'library\\Router' => __DIR__ . '/../..' . '/app/system/library/Router.php',
+        'model\\ExchangeApi' => __DIR__ . '/../..' . '/app/model/ExchangeApi.php',
+        'model\\Portfolio' => __DIR__ . '/../..' . '/app/model/Portfolio.php',
         'model\\Stock' => __DIR__ . '/../..' . '/app/model/Stock.php',
+        'model\\User' => __DIR__ . '/../..' . '/app/model/User.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

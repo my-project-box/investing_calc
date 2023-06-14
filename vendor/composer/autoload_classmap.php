@@ -7,14 +7,23 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
+    'controller\\ExchangeApi' => $baseDir . '/app/controller/ExchangeApi.php',
+    'controller\\Home' => $baseDir . '/app/controller/Home.php',
+    'controller\\Portfolio' => $baseDir . '/app/controller/Portfolio.php',
     'controller\\Stock' => $baseDir . '/app/controller/Stock.php',
+    'controller\\User' => $baseDir . '/app/controller/User.php',
     'engine\\Controller' => $baseDir . '/app/system/engine/Controller.php',
     'engine\\Loader' => $baseDir . '/app/system/engine/Loader.php',
     'engine\\Model' => $baseDir . '/app/system/engine/Model.php',
     'engine\\Registry' => $baseDir . '/app/system/engine/Registry.php',
+    'engine\\Request' => $baseDir . '/app/system/engine/Request.php',
     'engine\\Router' => $baseDir . '/app/system/engine/Router.php',
+    'library\\Cron' => $baseDir . '/app/system/library/Cron.php',
     'library\\Curl' => $baseDir . '/app/system/library/Curl.php',
     'library\\Database' => $baseDir . '/app/system/library/Database.php',
     'library\\Router' => $baseDir . '/app/system/library/Router.php',
+    'model\\ExchangeApi' => $baseDir . '/app/model/ExchangeApi.php',
+    'model\\Portfolio' => $baseDir . '/app/model/Portfolio.php',
     'model\\Stock' => $baseDir . '/app/model/Stock.php',
+    'model\\User' => $baseDir . '/app/model/User.php',
 );

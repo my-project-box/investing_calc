@@ -1,9 +1,9 @@
 <?php 
+
 namespace engine;
 
 use 
-   models\user\User,
-   system\classes\SiteFunction;
+   controller\User;
 
 /**
  * 
@@ -13,41 +13,37 @@ class Controller
 {
    protected $registry;
 
+
    public function __construct($registry)
    {
       
-      // Проверка доступа
-      /*if (strpos($_SERVER['REQUEST_URI'], 'admin')) {
-         
-         $registry->set('user', new User($registry));
-         
-         // http://vitrina.loc/admin/dashboard/product_image_by_url?email=tst@test.ru&password=123456
-         if (isset($_GET['email']) && isset($_GET['password'])) {
-            // Если форма отправлена 
-            // Получаем данные из формы
-            $email    = SiteFunction::sanitizeString($_GET['email']);
-            $password = SiteFunction::sanitizeString($_GET['password']);
-
-            // Проверяем существует ли пользователь
-            $user = false;
-            $user = User::checkUserData($email, $password);
-
-            if ($user) {
-                  // Если данные правильные, запоминаем пользователя (сессия)
-               User::auth($user);
-
-               $parse_url = parse_url($_SERVER['REQUEST_URI']);
-               header('Location: ' . $parse_url['path']);
-
-            } else die('Access denied');
-         }
-
-         // Подключаем модель
-         $registry->get('user')->check();
-         
-      }*/
-      
       $this->registry = $registry;
+
+      $user_check = false;
+      $login      = isset ($this->request->post()['login']) ? $this->request->post()['login'] : '';
+      $pass       = isset ($this->request->post()['password']) ? $this->request->post()['password'] : '';
+
+      if ( empty ($login) || empty ($pass))
+         $user_check = false;
+      
+      $user = new User ($registry);
+
+      if ($login) {
+
+         $user_data = $user->check ($login, $pass);
+         
+         if ($user_data) {
+            $_SESSION['user_id'] = $user_data['user_id'];
+            $_SESSION['role']    = $user_data['role'];
+            $user_check = true;
+         }
+      }
+      
+      if ( isset ($this->request->session()['user_id']) )
+         $user_check = true;
+
+      if (!$user_check)
+         $user->auth ();
    }
 
 

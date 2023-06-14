@@ -1,4 +1,5 @@
 /* --- Обнуление CSS стилей --- */
+
 * {margin: 0; padding: 0; border: 0;}
 
 *, *:before, *:after {
@@ -11,6 +12,7 @@ html, body {
 	width: 100%;
 	height: 100%;
 	font-size: 100%;
+    font-family: 'Montserrat', sans-serif !important;
 	line-height: 1;
 	font-size: 16px;
 	-ms-text-size-adjust: 100%;
@@ -40,71 +42,216 @@ img {vertical-align: top;}
 
 h1, h2, h3, h4, h5, h6 {font-size: inherif; font-weight: 400;}
 
+.accordion-button:focus {
+    box-shadow: none !important;
+}
+
 
 /********/
 body {
     background-color: black;
 }
 
-.security__list {
-    display: flex;
-     flex-direction: column;
-     align-items: center;
+/** Header */
+
+#header {
+    box-shadow: 5px 0px 10px rgb(0 0 0 / 50%);
+    background: #1e88e5;
+    height: 70px;
 }
 
-.security__head,
-.security__body {
+#header > div {
+    height: 100%;
+}
+
+#header .logo {
+    background: rgba(0,0,0,0.05);
     display: flex;
-    justify-content: start;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 2em;
+    font-weight: 800;
+}
+
+
+/** Sidebar **/
+.column_left {
+    padding-top: 70px;
+    background: #fff;
+    -webkit-box-shadow: 1px 0px 20px rgb(0 0 0 / 8%);
+    box-shadow: 1px 0px 20px rgb(0 0 0 / 8%);
+    min-height: 100vh;
+}
+
+#sidebar {
+    position: relative;
+    height: 100%;
+}
+
+#sidebar nav:last-child {
+    position: absolute;
+    bottom: 20px;
+}
+
+#sidebar .nav-link {
+    line-height: 1;
+}
+
+#sidebar .nav-link.btn {
+    color: white;
+}
+
+
+
+/** Home page */
+
+#home {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#home form fieldset {
+    display: flex;
+    flex-direction: column;
+}
+
+#home form input{
+    border: #ccc 1px solid;
+    margin-bottom: 10px;
+    padding: 5px 20px;
+}
+
+.content {
+    display: flex;
+     flex-direction: column;
+     align-items: start;
+}
+
+
+
+/** Таблица **/
+
+#stock .list {
+    width: 100%;
+}
+
+#stock .scroll-table {
+    overflow-x: auto;
+    height: 400px;
+}
+
+#stock .thead-fixed {
+    position: sticky;
+    top: 0;
     background-color: white;
 }
 
-.security__head div,
-.security__body div {
-    padding: 10px 20px;
-    width: 200px;
-    max-width: 200px;
+#stock .thead-fixed tr,
+#stock .thead-fixed td,
+#stock .thead-fixed th {
+    border: 0 !important;
 }
 
-.security__head div:nth-child(1),
-.security__body div:nth-child(1) {
-    background-color: burlywood;
-}
-
-
-.security__head div:nth-child(2),
-.security__body div:nth-child(2),
-.security__head div:nth-child(4),
-.security__body div:nth-child(4) {
-    width: 100px;
-}
-
-.security__head {
-    position: sticky;
-    top:0;
-}
-
-.security__head div {
-    font-weight: 600;
+#stock .list thead tr,
+#stock .list thead th,
+#stock .list thead td {
     border: 1px solid #ccc;
+    text-align: center;
+    font-size: .9em;
+    background-color: tomato;
+}
+
+#stock .list thead th,
+#stock .list thead td {
+    padding: 5px 10px;
+}
+
+#stock .list thead td {
+    font-size: .6em;
+}
+
+#stock .list tbody {
+    font-size: .8em;
+    text-align: center;
+}
+
+#stock .list tbody input {
+    background-color: transparent;
+}
+
+#stock .list tbody tr {
+    height: 30px;
+    border: 1px #ccc solid;
+}
+
+#stock .list tbody td {
+    padding: 0 10px;
+}
+
+#stock .list tbody tr:hover {
+    background-color: #ccc;
+    cursor: pointer;
+}
+
+#stock .list tbody td:first-child {
+    text-align: left;
+    padding: 10px;
+    width: 340px;
+}
+
+
+/** --- Фильтры --- **/
+#stock .accordion {
+    width: 50%;
+    margin-top: 20px;
+}
+
+#stock .accordion-header button {
+    font-size: 1.5rem;
+    box-shadow: inset 0 -1px 0 #dee2e6 !important;
+}
+
+#stock .accordion-header button,
+#stock .accordion-header button::after {
+    color: black;
+}
+
+#stock .accordion-header button::after {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill=''><path fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/></svg>");
+}
+
+#stock .accordion-button {
+    background-color: white;
+}
+
+#stock .filter form {
+    display: flex;
+    /*justify-content: center;*/
+}
+
+#stock .filter fieldset {
+    margin: 10px 20px;
+}
+
+#stock .filter legend {
+    font-size: 1.2em;
+}
+
+#stock .filter label {
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
-.security__body {
-    font-size: .8em;
-    align-items: center;
+#stock .filter label > span {
+    margin-right: 10px;
 }
 
-.security__body div:nth-child(2) {
-    text-transform: uppercase;
-}
-
-.security__body {
-    border-bottom: 1px solid #ccc;
-}
-
-.security__body:last-child {
-    border-bottom: none;
-}
+#stock .filter button {
+    /*float: right;*/
+    /*margin-bottom: 50px;*/
+    padding: 10px 20px;
+    /*color: black;*/
+} 
